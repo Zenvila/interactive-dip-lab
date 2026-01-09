@@ -370,7 +370,6 @@ app.run(debug=True, host='0.0.0.0', port=5001)
 - Close other applications
 - Check system resources
 
-For more troubleshooting tips, see [DOCUMENTATION.md](DOCUMENTATION.md).
 
 ---
 
@@ -416,3 +415,4 @@ If you find this project helpful, please give it a ⭐ on GitHub!
 [⬆ Back to Top](#-digital-image-processing-learning-dashboard)
 
 </div>
+
