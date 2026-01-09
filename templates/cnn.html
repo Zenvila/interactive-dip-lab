@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+
+{% block title %}CNN Visualization - DIP Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">🧠 Convolutional Neural Network (CNN)</h1>
+        
+        <div class="alert alert-info">
+            <strong>CNN Overview:</strong> Convolutional Neural Networks are deep learning models designed for image processing. 
+            This visualization shows the key operations: <strong>Convolution</strong>, <strong>Activation</strong>, and <strong>Pooling</strong>.
+            Each step transforms the image to extract features that help the network understand patterns.
+        </div>
+
+        <!-- Image Upload -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Upload Image</h5>
+                <input type="file" id="cnnImageInput" accept="image/*" class="form-control mb-3">
+                <button onclick="loadCNNImage()" class="btn btn-primary">Load Image</button>
+            </div>
+        </div>
+
+        <!-- Step 1: Convolution -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <button class="btn btn-link text-decoration-none text-white w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#step1">
+                        🔹 Step 1: Convolution (Feature Extraction)
+                    </button>
+                </h5>
+            </div>
+            <div id="step1" class="collapse show">
+                <div class="card-body">
+                    <p><strong>Why Convolution?</strong> Convolution applies filters (kernels) to extract features like edges, 
+                    textures, and patterns. Different kernels detect different features. This is the core operation of CNNs!</p>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="kernelType" class="form-label">Kernel Type:</label>
+                            <select id="kernelType" class="form-select" onchange="updateStep1()">
+                                <option value="edge">Edge Detection</option>
+                                <option value="blur">Blur</option>
+                                <option value="sharpen">Sharpen</option>
+                                <option value="emboss">Emboss</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="kernelSize" class="form-label">Kernel Size: <span id="kernelSizeValue">3</span></label>
+                            <input type="range" class="form-range" id="kernelSize" min="3" max="7" step="2" value="3" oninput="updateKernelSize(); updateStep1();">
+                        </div>
+                    </div>
+                    
+                    <div class="row" id="step1Results" style="display: none;">
+                        <div class="col-md-6 text-center">
+                            <h6>Original Image</h6>
+                            <img id="cnnOriginal" class="img-fluid" alt="Original">
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <h6>Convolved Output (Feature Map)</h6>
+                            <div id="convSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <img id="convolvedImage" class="img-fluid" alt="Convolved" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Activation -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <button class="btn btn-link text-decoration-none text-white w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#step2">
+                        🔹 Step 2: Activation Function (Non-linearity)
+                    </button>
+                </h5>
+            </div>
+            <div id="step2" class="collapse">
+                <div class="card-body">
+                    <p><strong>Why Activation?</strong> Activation functions introduce non-linearity, allowing the network to learn complex patterns. 
+                    ReLU is most common - it keeps positive values and zeros negatives, making training faster and more efficient.</p>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="activationType" class="form-label">Activation Function:</label>
+                            <select id="activationType" class="form-select" onchange="updateStep2()">
+                                <option value="relu">ReLU (Rectified Linear Unit)</option>
+                                <option value="sigmoid">Sigmoid</option>
+                                <option value="tanh">Tanh</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row" id="step2Results" style="display: none;">
+                        <div class="col-md-6 text-center">
+                            <h6>Before Activation</h6>
+                            <img id="beforeActivation" class="img-fluid" alt="Before">
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <h6>After Activation</h6>
+                            <div id="activationSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <img id="activatedImage" class="img-fluid" alt="Activated" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Pooling -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <button class="btn btn-link text-decoration-none text-white w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#step3">
+                        🔹 Step 3: Pooling (Downsampling)
+                    </button>
+                </h5>
+            </div>
+            <div id="step3" class="collapse">
+                <div class="card-body">
+                    <p><strong>Why Pooling?</strong> Pooling reduces spatial dimensions, making the network more efficient and 
+                    translation-invariant. Max pooling keeps the strongest features, while average pooling smooths the output.</p>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="poolType" class="form-label">Pooling Type:</label>
+                            <select id="poolType" class="form-select" onchange="updateStep3()">
+                                <option value="max">Max Pooling</option>
+                                <option value="average">Average Pooling</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="poolSize" class="form-label">Pool Size: <span id="poolSizeValue">2</span></label>
+                            <input type="range" class="form-range" id="poolSize" min="2" max="4" step="1" value="2" oninput="updatePoolSize(); updateStep3();">
+                        </div>
+                    </div>
+                    
+                    <div class="row" id="step3Results" style="display: none;">
+                        <div class="col-md-6 text-center">
+                            <h6>Before Pooling</h6>
+                            <img id="beforePooling" class="img-fluid" alt="Before">
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <h6>After Pooling</h6>
+                            <div id="poolSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <img id="pooledImage" class="img-fluid" alt="Pooled" style="display: none;">
+                            <p class="mt-2 text-muted" id="poolSizeInfo"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature Maps Visualization -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <button class="btn btn-link text-decoration-none text-white w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#featureMaps">
+                        🔹 Multiple Feature Maps (Different Filters)
+                    </button>
+                </h5>
+            </div>
+            <div id="featureMaps" class="collapse">
+                <div class="card-body">
+                    <p><strong>Multiple Filters:</strong> Real CNNs use many filters simultaneously! Each filter detects different features. 
+                    Here we show how different kernels create different feature maps from the same image.</p>
+                    
+                    <button onclick="generateFeatureMaps()" class="btn btn-primary btn-lg mb-3">Generate Feature Maps</button>
+                    
+                    <div class="row" id="featureMapsResults" style="display: none;">
+                        <!-- Feature maps will be inserted here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let cnnImageBase64 = null;
+let currentConvolved = null;
+
+function updateKernelSize() {
+    document.getElementById('kernelSizeValue').textContent = document.getElementById('kernelSize').value;
+}
+
+function updatePoolSize() {
+    document.getElementById('poolSizeValue').textContent = document.getElementById('poolSize').value;
+}
+
+function loadCNNImage() {
+    const fileInput = document.getElementById('cnnImageInput');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Please select an image file');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        cnnImageBase64 = e.target.result;
+        document.getElementById('cnnOriginal').src = cnnImageBase64;
+        document.getElementById('step1Results').style.display = 'flex';
+        updateStep1();
+    };
+    reader.readAsDataURL(file);
+}
+
+function updateStep1() {
+    if (!cnnImageBase64) return;
+    
+    const kernelType = document.getElementById('kernelType').value;
+    const kernelSize = parseInt(document.getElementById('kernelSize').value);
+    
+    document.getElementById('convSpinner').style.display = 'block';
+    
+    fetch('/api/process/cnn/convolution', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            image: cnnImageBase64,
+            kernel_type: kernelType,
+            kernel_size: kernelSize
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('convSpinner').style.display = 'none';
+        if (data.success) {
+            currentConvolved = 'data:image/jpeg;base64,' + data.result;
+            document.getElementById('convolvedImage').src = currentConvolved;
+            document.getElementById('convolvedImage').style.display = 'block';
+            
+            // Update step 2 input
+            document.getElementById('beforeActivation').src = currentConvolved;
+            updateStep2();
+        } else {
+            alert('Error: ' + (data.error || 'Processing failed'));
+        }
+    })
+    .catch(error => {
+        document.getElementById('convSpinner').style.display = 'none';
+        console.error('Error:', error);
+    });
+}
+
+function updateStep2() {
+    if (!currentConvolved) return;
+    
+    const activationType = document.getElementById('activationType').value;
+    
+    document.getElementById('activationSpinner').style.display = 'block';
+    document.getElementById('step2Results').style.display = 'flex';
+    
+    // Convert displayed image back to base64 for processing
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.width;
+        canvas.height = img.height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        const imageData = canvas.toDataURL('image/jpeg');
+        
+        fetch('/api/process/cnn/activation', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                image: imageData,
+                activation_type: activationType
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('activationSpinner').style.display = 'none';
+            if (data.success) {
+                document.getElementById('activatedImage').src = 'data:image/jpeg;base64,' + data.result;
+                document.getElementById('activatedImage').style.display = 'block';
+            }
+        })
+        .catch(error => {
+            document.getElementById('activationSpinner').style.display = 'none';
+            console.error('Error:', error);
+        });
+    };
+    img.src = currentConvolved;
+}
+
+function updateStep3() {
+    if (!cnnImageBase64) return;
+    
+    const poolType = document.getElementById('poolType').value;
+    const poolSize = parseInt(document.getElementById('poolSize').value);
+    
+    document.getElementById('poolSpinner').style.display = 'block';
+    document.getElementById('step3Results').style.display = 'flex';
+    
+    fetch('/api/process/cnn/pooling', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            image: cnnImageBase64,
+            pool_type: poolType,
+            pool_size: poolSize
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('poolSpinner').style.display = 'none';
+        if (data.success) {
+            document.getElementById('beforePooling').src = cnnImageBase64;
+            document.getElementById('pooledImage').src = 'data:image/jpeg;base64,' + data.result;
+            document.getElementById('pooledImage').style.display = 'block';
+            document.getElementById('poolSizeInfo').textContent = 
+                `Size: ${data.original_size} → ${data.result_size}`;
+        } else {
+            alert('Error: ' + (data.error || 'Processing failed'));
+        }
+    })
+    .catch(error => {
+        document.getElementById('poolSpinner').style.display = 'none';
+        console.error('Error:', error);
+    });
+}
+
+function generateFeatureMaps() {
+    if (!cnnImageBase64) {
+        alert('Please upload an image first');
+        return;
+    }
+    
+    document.getElementById('featureMapsResults').style.display = 'flex';
+    document.getElementById('featureMapsResults').innerHTML = '<div class="col-12 text-center"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+    
+    fetch('/api/process/cnn/feature_maps', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            image: cnnImageBase64,
+            num_filters: 4
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let html = '';
+            data.feature_maps.forEach((fm, index) => {
+                html += `
+                    <div class="col-md-6 col-lg-3 mb-3">
+                        <div class="card">
+                            <div class="card-body text-center">
+                                <h6>${fm.name}</h6>
+                                <img src="data:image/jpeg;base64,${fm.image}" class="img-fluid" alt="${fm.name}">
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('featureMapsResults').innerHTML = html;
+        } else {
+            alert('Error: ' + (data.error || 'Processing failed'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error generating feature maps');
+    });
+}
+</script>
+{% endblock %}

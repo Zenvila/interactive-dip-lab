@@ -1,0 +1,276 @@
+{% extends "base.html" %}
+
+{% block title %}Histogram Processing - DIP Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">📊 Histogram Processing</h1>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-4" id="histogramTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="equalize-tab" data-bs-toggle="tab" data-bs-target="#equalize" type="button">
+                    📈 Histogram Equalization
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="match-tab" data-bs-toggle="tab" data-bs-target="#match" type="button">
+                    🔗 Histogram Matching
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="histogramTabContent">
+            <!-- Equalization Tab -->
+            <div class="tab-pane fade show active" id="equalize" role="tabpanel">
+                <div class="alert alert-info">
+                    <strong>Histogram Equalization:</strong> Redistributes pixel intensities to improve contrast. 
+                    It spreads out the most frequent intensity values, making the image more visually appealing.
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Upload Image</h5>
+                        <input type="file" id="equalizeImageInput" accept="image/*" class="form-control mb-3">
+                        <button onclick="processEqualization()" class="btn btn-primary">Process Equalization</button>
+                    </div>
+                </div>
+
+                <div class="row" id="equalizeResults" style="display: none;">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header"><h5>Original Image</h5></div>
+                            <div class="card-body text-center">
+                                <img id="equalizeOriginal" class="img-fluid" alt="Original">
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h5>Original Histogram</h5></div>
+                            <div class="card-body text-center">
+                                <img id="equalizeHistOrig" class="img-fluid" alt="Histogram">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header"><h5>Equalized Image</h5></div>
+                            <div class="card-body text-center">
+                                <div id="equalizeSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <img id="equalizeResult" class="img-fluid" alt="Equalized" style="display: none;">
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h5>Equalized Histogram</h5></div>
+                            <div class="card-body text-center">
+                                <img id="equalizeHistEq" class="img-fluid" alt="Histogram">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Matching Tab -->
+            <div class="tab-pane fade" id="match" role="tabpanel">
+                <div class="alert alert-info">
+                    <strong>Histogram Matching:</strong> Transforms the histogram of a source image to match 
+                    the histogram of a reference image. This is useful for color/contrast transfer between images.
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">Source Image</h5>
+                                <input type="file" id="sourceImageInput" accept="image/*" class="form-control mb-3">
+                                <img id="sourcePreview" class="img-fluid mb-3" style="display: none;" alt="Source">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">Reference Image</h5>
+                                <input type="file" id="referenceImageInput" accept="image/*" class="form-control mb-3">
+                                <img id="referencePreview" class="img-fluid mb-3" style="display: none;" alt="Reference">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mb-4">
+                    <button onclick="processMatching()" class="btn btn-primary btn-lg">Match Histograms</button>
+                </div>
+
+                <div class="row" id="matchResults" style="display: none;">
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-header"><h5>Source Image</h5></div>
+                            <div class="card-body text-center">
+                                <img id="matchSource" class="img-fluid" alt="Source">
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h5>Source Histogram</h5></div>
+                            <div class="card-body text-center">
+                                <img id="matchHistSource" class="img-fluid" alt="Histogram">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-header"><h5>Reference Image</h5></div>
+                            <div class="card-body text-center">
+                                <img id="matchReference" class="img-fluid" alt="Reference">
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h5>Reference Histogram</h5></div>
+                            <div class="card-body text-center">
+                                <img id="matchHistRef" class="img-fluid" alt="Histogram">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-header"><h5>Matched Image</h5></div>
+                            <div class="card-body text-center">
+                                <div id="matchSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <img id="matchResult" class="img-fluid" alt="Matched" style="display: none;">
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="card-header"><h5>Matched Histogram</h5></div>
+                            <div class="card-body text-center">
+                                <img id="matchHistMatched" class="img-fluid" alt="Histogram">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let equalizeImageBase64 = null;
+let sourceImageBase64 = null;
+let referenceImageBase64 = null;
+
+// Equalization
+document.getElementById('equalizeImageInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            equalizeImageBase64 = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+function processEqualization() {
+    if (!equalizeImageBase64) {
+        alert('Please upload an image first');
+        return;
+    }
+    
+    document.getElementById('equalizeSpinner').style.display = 'block';
+    document.getElementById('equalizeResults').style.display = 'flex';
+    
+    fetch('/api/process/histogram/equalize', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({image: equalizeImageBase64})
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('equalizeSpinner').style.display = 'none';
+        if (data.success) {
+            document.getElementById('equalizeOriginal').src = equalizeImageBase64;
+            document.getElementById('equalizeResult').src = 'data:image/jpeg;base64,' + data.equalized;
+            document.getElementById('equalizeResult').style.display = 'block';
+            document.getElementById('equalizeHistOrig').src = 'data:image/png;base64,' + data.hist_original;
+            document.getElementById('equalizeHistEq').src = 'data:image/png;base64,' + data.hist_equalized;
+        } else {
+            alert('Error: ' + (data.error || 'Processing failed'));
+        }
+    })
+    .catch(error => {
+        document.getElementById('equalizeSpinner').style.display = 'none';
+        console.error('Error:', error);
+        alert('Error processing image');
+    });
+}
+
+// Matching
+document.getElementById('sourceImageInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            sourceImageBase64 = e.target.result;
+            document.getElementById('sourcePreview').src = sourceImageBase64;
+            document.getElementById('sourcePreview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+document.getElementById('referenceImageInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            referenceImageBase64 = e.target.result;
+            document.getElementById('referencePreview').src = referenceImageBase64;
+            document.getElementById('referencePreview').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+function processMatching() {
+    if (!sourceImageBase64 || !referenceImageBase64) {
+        alert('Please upload both source and reference images');
+        return;
+    }
+    
+    document.getElementById('matchSpinner').style.display = 'block';
+    document.getElementById('matchResults').style.display = 'flex';
+    
+    fetch('/api/process/histogram/match', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            source_image: sourceImageBase64,
+            reference_image: referenceImageBase64
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('matchSpinner').style.display = 'none';
+        if (data.success) {
+            document.getElementById('matchSource').src = sourceImageBase64;
+            document.getElementById('matchReference').src = referenceImageBase64;
+            document.getElementById('matchResult').src = 'data:image/jpeg;base64,' + data.matched;
+            document.getElementById('matchResult').style.display = 'block';
+            document.getElementById('matchHistSource').src = 'data:image/png;base64,' + data.hist_source;
+            document.getElementById('matchHistRef').src = 'data:image/png;base64,' + data.hist_reference;
+            document.getElementById('matchHistMatched').src = 'data:image/png;base64,' + data.hist_matched;
+        } else {
+            alert('Error: ' + (data.error || 'Processing failed'));
+        }
+    })
+    .catch(error => {
+        document.getElementById('matchSpinner').style.display = 'none';
+        console.error('Error:', error);
+        alert('Error processing images');
+    });
+}
+</script>
+{% endblock %}

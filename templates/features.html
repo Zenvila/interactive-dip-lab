@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}Feature Detection - DIP Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">⭐ Feature Detection</h1>
+
+        <!-- Tabs -->
+        <ul class="nav nav-tabs mb-4" id="featuresTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="harris-tab" data-bs-toggle="tab" data-bs-target="#harris" type="button">
+                    🔷 Harris Corner Detection
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="sift-tab" data-bs-toggle="tab" data-bs-target="#sift" type="button">
+                    🔶 SIFT Keypoints
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="featuresTabContent">
+            <!-- Harris Tab -->
+            <div class="tab-pane fade show active" id="harris" role="tabpanel">
+                <div class="alert alert-info">
+                    <strong>Harris Corner Detection:</strong> Detects corners in images by analyzing 
+                    intensity variations in different directions. Corners are points where edges meet.
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Upload Image</h5>
+                        <input type="file" id="harrisImageInput" accept="image/*" class="form-control mb-3">
+                        <button onclick="processHarris()" class="btn btn-primary">Detect Corners</button>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Parameters</h5>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <label for="harrisBlockSize" class="form-label">Block Size: <span id="harrisBlockValue">2</span></label>
+                                <input type="range" class="form-range" id="harrisBlockSize" min="2" max="10" value="2" oninput="document.getElementById('harrisBlockValue').textContent = this.value;">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="harrisK" class="form-label">k-value: <span id="harrisKValue">0.04</span></label>
+                                <input type="range" class="form-range" id="harrisK" min="0.01" max="0.20" step="0.01" value="0.04" oninput="document.getElementById('harrisKValue').textContent = this.value;">
+                            </div>
+                            <div class="col-md-4">
+                                <label for="harrisThreshold" class="form-label">Threshold (%): <span id="harrisThresholdValue">1.0</span></label>
+                                <input type="range" class="form-range" id="harrisThreshold" min="0.1" max="10.0" step="0.1" value="1.0" oninput="document.getElementById('harrisThresholdValue').textContent = this.value;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" id="harrisResults" style="display: none;">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>Original Image</h5></div>
+                            <div class="card-body text-center">
+                                <img id="harrisOriginal" class="img-fluid" alt="Original">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>Harris Corners</h5></div>
+                            <div class="card-body text-center">
+                                <div id="harrisSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <img id="harrisResult" class="img-fluid" alt="Result" style="display: none;">
+                                <p class="mt-2" id="harrisCount"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SIFT Tab -->
+            <div class="tab-pane fade" id="sift" role="tabpanel">
+                <div class="alert alert-info">
+                    <strong>SIFT (Scale-Invariant Feature Transform):</strong> Detects distinctive keypoints 
+                    that are invariant to scale, rotation, and illumination changes. These features are useful 
+                    for image matching and object recognition.
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Upload Image</h5>
+                        <input type="file" id="siftImageInput" accept="image/*" class="form-control mb-3">
+                        <button onclick="processSIFT()" class="btn btn-primary">Detect Keypoints</button>
+                    </div>
+                </div>
+
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Parameters</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="siftMaxFeatures" class="form-label">Maximum Features: <span id="siftMaxValue">100</span></label>
+                                <input type="range" class="form-range" id="siftMaxFeatures" min="10" max="500" step="10" value="100" oninput="document.getElementById('siftMaxValue').textContent = this.value;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" id="siftResults" style="display: none;">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>Original Image</h5></div>
+                            <div class="card-body text-center">
+                                <img id="siftOriginal" class="img-fluid" alt="Original">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>SIFT Keypoints</h5></div>
+                            <div class="card-body text-center">
+                                <div id="siftSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <img id="siftResult" class="img-fluid" alt="Result" style="display: none;">
+                                <p class="mt-2" id="siftCount"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let harrisImageBase64 = null;
+let siftImageBase64 = null;
+
+// Harris
+document.getElementById('harrisImageInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            harrisImageBase64 = e.target.result;
+            document.getElementById('harrisOriginal').src = harrisImageBase64;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+function processHarris() {
+    if (!harrisImageBase64) {
+        alert('Please upload an image first');
+        return;
+    }
+    
+    const blockSize = parseInt(document.getElementById('harrisBlockSize').value);
+    const kValue = parseFloat(document.getElementById('harrisK').value);
+    const threshold = parseFloat(document.getElementById('harrisThreshold').value) / 100.0;
+    
+    document.getElementById('harrisSpinner').style.display = 'block';
+    document.getElementById('harrisResults').style.display = 'flex';
+    
+    fetch('/api/process/features/harris', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            image: harrisImageBase64,
+            block_size: blockSize,
+            k_value: kValue,
+            threshold: threshold
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('harrisSpinner').style.display = 'none';
+        if (data.success) {
+            document.getElementById('harrisResult').src = 'data:image/jpeg;base64,' + data.result;
+            document.getElementById('harrisResult').style.display = 'block';
+            document.getElementById('harrisCount').textContent = `${data.corner_count} corners detected`;
+        } else {
+            alert('Error: ' + (data.error || 'Processing failed'));
+        }
+    })
+    .catch(error => {
+        document.getElementById('harrisSpinner').style.display = 'none';
+        console.error('Error:', error);
+        alert('Error processing image');
+    });
+}
+
+// SIFT
+document.getElementById('siftImageInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            siftImageBase64 = e.target.result;
+            document.getElementById('siftOriginal').src = siftImageBase64;
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+function processSIFT() {
+    if (!siftImageBase64) {
+        alert('Please upload an image first');
+        return;
+    }
+    
+    const maxFeatures = parseInt(document.getElementById('siftMaxFeatures').value);
+    
+    document.getElementById('siftSpinner').style.display = 'block';
+    document.getElementById('siftResults').style.display = 'flex';
+    
+    fetch('/api/process/features/sift', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            image: siftImageBase64,
+            max_features: maxFeatures
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('siftSpinner').style.display = 'none';
+        if (data.success) {
+            document.getElementById('siftResult').src = 'data:image/jpeg;base64,' + data.result;
+            document.getElementById('siftResult').style.display = 'block';
+            document.getElementById('siftCount').textContent = `${data.keypoint_count} keypoints detected`;
+        } else {
+            alert('Error: ' + (data.error || 'SIFT not available. Install opencv-contrib-python'));
+        }
+    })
+    .catch(error => {
+        document.getElementById('siftSpinner').style.display = 'none';
+        console.error('Error:', error);
+        alert('Error processing image');
+    });
+}
+</script>
+{% endblock %}

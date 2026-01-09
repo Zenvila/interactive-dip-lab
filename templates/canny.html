@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}Canny Edge Detection - DIP Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">🔍 Canny Edge Detection</h1>
+        
+        <div class="alert alert-info">
+            <strong>Canny Edge Detection:</strong> A multi-stage algorithm to detect edges. 
+            It applies Gaussian blur to reduce noise, computes gradients, and uses hysteresis thresholding 
+            to create a clean edge map.
+        </div>
+
+        <!-- Image Upload -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Upload Image</h5>
+                <input type="file" id="cannyImageInput" accept="image/*" class="form-control mb-3">
+                <button onclick="loadCannyImage()" class="btn btn-primary">Load Image</button>
+            </div>
+        </div>
+
+        <!-- Global Controls -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Parameters</h5>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="kernelSize" class="form-label">Kernel Size: <span id="kernelValue">5</span></label>
+                        <input type="range" class="form-range" id="kernelSize" min="3" max="21" step="2" value="5" oninput="updateKernelValue(); updateAllSteps();">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="sigma" class="form-label">Sigma (σ): <span id="sigmaValue">1.0</span></label>
+                        <input type="range" class="form-range" id="sigma" min="0.1" max="5.0" step="0.1" value="1.0" oninput="updateSigmaValue(); updateAllSteps();">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 1: Gaussian Blur -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <button class="btn btn-link text-decoration-none text-dark w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#step1">
+                        🔹 Step 1: Gaussian Blur (Noise Reduction)
+                    </button>
+                </h5>
+            </div>
+            <div id="step1" class="collapse show">
+                <div class="card-body">
+                    <p><strong>Why Gaussian Blur?</strong> Before detecting edges, we need to reduce noise in the image. 
+                    Gaussian blur smooths the image while preserving important features.</p>
+                    <div class="row" id="step1Results" style="display: none;">
+                        <div class="col-md-6 text-center">
+                            <h6>Original</h6>
+                            <img id="cannyOriginal" class="img-fluid" alt="Original">
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <h6>Gaussian Blurred</h6>
+                            <div id="blurSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <img id="blurredImage" class="img-fluid" alt="Blurred" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Gradient Computation -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <button class="btn btn-link text-decoration-none text-dark w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#step2">
+                        🔹 Step 2: Gradient Computation (Sobel)
+                    </button>
+                </h5>
+            </div>
+            <div id="step2" class="collapse">
+                <div class="card-body">
+                    <p><strong>Why Gradients?</strong> Edges are areas where pixel intensity changes rapidly. 
+                    The Sobel operator computes the gradient magnitude, which shows where these changes occur.</p>
+                    <div class="row" id="step2Results" style="display: none;">
+                        <div class="col-md-6 text-center">
+                            <h6>Gradient Magnitude</h6>
+                            <div id="gradientSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <img id="magnitudeImage" class="img-fluid" alt="Magnitude" style="display: none;">
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <h6>Gradient Direction</h6>
+                            <img id="directionImage" class="img-fluid" alt="Direction" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Hysteresis Thresholding -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <button class="btn btn-link text-decoration-none text-dark w-100 text-start" type="button" data-bs-toggle="collapse" data-bs-target="#step3">
+                        🔹 Step 3: Hysteresis Thresholding
+                    </button>
+                </h5>
+            </div>
+            <div id="step3" class="collapse">
+                <div class="card-body">
+                    <p><strong>Why Hysteresis?</strong> We use two thresholds to create a clean edge map. 
+                    Strong edges (above high threshold) are kept, weak edges (between thresholds) are kept 
+                    only if they're connected to strong edges.</p>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="lowThreshold" class="form-label">Low Threshold: <span id="lowValue">50</span></label>
+                            <input type="range" class="form-range" id="lowThreshold" min="0" max="255" value="50" oninput="updateLowValue(); updateStep3();">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="highThreshold" class="form-label">High Threshold: <span id="highValue">150</span></label>
+                            <input type="range" class="form-range" id="highThreshold" min="0" max="255" value="150" oninput="updateHighValue(); updateStep3();">
+                        </div>
+                    </div>
+                    <div class="row" id="step3Results" style="display: none;">
+                        <div class="col-md-6 text-center">
+                            <h6>Thresholded (Strong + Weak)</h6>
+                            <div id="thresholdSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <img id="thresholdedImage" class="img-fluid" alt="Thresholded" style="display: none;">
+                        </div>
+                        <div class="col-md-6 text-center">
+                            <h6>Final Canny Edges</h6>
+                            <img id="finalEdgesImage" class="img-fluid" alt="Final Edges" style="display: none;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let cannyImageBase64 = null;
+
+function updateKernelValue() {
+    document.getElementById('kernelValue').textContent = document.getElementById('kernelSize').value;
+}
+
+function updateSigmaValue() {
+    document.getElementById('sigmaValue').textContent = document.getElementById('sigma').value;
+}
+
+function updateLowValue() {
+    document.getElementById('lowValue').textContent = document.getElementById('lowThreshold').value;
+}
+
+function updateHighValue() {
+    document.getElementById('highValue').textContent = document.getElementById('highThreshold').value;
+}
+
+function loadCannyImage() {
+    const fileInput = document.getElementById('cannyImageInput');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Please select an image file');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        cannyImageBase64 = e.target.result;
+        document.getElementById('cannyOriginal').src = cannyImageBase64;
+        document.getElementById('step1Results').style.display = 'flex';
+        updateAllSteps();
+    };
+    reader.readAsDataURL(file);
+}
+
+function updateAllSteps() {
+    updateStep1();
+    updateStep2();
+    updateStep3();
+}
+
+function updateStep1() {
+    if (!cannyImageBase64) return;
+    
+    const kernelSize = parseInt(document.getElementById('kernelSize').value);
+    const sigma = parseFloat(document.getElementById('sigma').value);
+    
+    document.getElementById('blurSpinner').style.display = 'block';
+    
+    fetch('/api/process/canny/blur', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            image: cannyImageBase64,
+            kernel_size: kernelSize,
+            sigma: sigma
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('blurSpinner').style.display = 'none';
+        if (data.success) {
+            document.getElementById('blurredImage').src = 'data:image/jpeg;base64,' + data.blurred;
+            document.getElementById('blurredImage').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        document.getElementById('blurSpinner').style.display = 'none';
+        console.error('Error:', error);
+    });
+}
+
+function updateStep2() {
+    if (!cannyImageBase64) return;
+    
+    const kernelSize = parseInt(document.getElementById('kernelSize').value);
+    const sigma = parseFloat(document.getElementById('sigma').value);
+    
+    document.getElementById('gradientSpinner').style.display = 'block';
+    document.getElementById('step2Results').style.display = 'flex';
+    
+    fetch('/api/process/canny/gradients', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            image: cannyImageBase64,
+            kernel_size: kernelSize,
+            sigma: sigma
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('gradientSpinner').style.display = 'none';
+        if (data.success) {
+            document.getElementById('magnitudeImage').src = 'data:image/jpeg;base64,' + data.magnitude;
+            document.getElementById('magnitudeImage').style.display = 'block';
+            document.getElementById('directionImage').src = 'data:image/jpeg;base64,' + data.direction;
+            document.getElementById('directionImage').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        document.getElementById('gradientSpinner').style.display = 'none';
+        console.error('Error:', error);
+    });
+}
+
+function updateStep3() {
+    if (!cannyImageBase64) return;
+    
+    const kernelSize = parseInt(document.getElementById('kernelSize').value);
+    const sigma = parseFloat(document.getElementById('sigma').value);
+    const lowThreshold = parseInt(document.getElementById('lowThreshold').value);
+    const highThreshold = parseInt(document.getElementById('highThreshold').value);
+    
+    document.getElementById('thresholdSpinner').style.display = 'block';
+    document.getElementById('step3Results').style.display = 'flex';
+    
+    fetch('/api/process/canny/threshold', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            image: cannyImageBase64,
+            kernel_size: kernelSize,
+            sigma: sigma,
+            low_threshold: lowThreshold,
+            high_threshold: highThreshold
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('thresholdSpinner').style.display = 'none';
+        if (data.success) {
+            document.getElementById('thresholdedImage').src = 'data:image/jpeg;base64,' + data.thresholded;
+            document.getElementById('thresholdedImage').style.display = 'block';
+            document.getElementById('finalEdgesImage').src = 'data:image/jpeg;base64,' + data.final_edges;
+            document.getElementById('finalEdgesImage').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        document.getElementById('thresholdSpinner').style.display = 'none';
+        console.error('Error:', error);
+    });
+}
+</script>
+{% endblock %}

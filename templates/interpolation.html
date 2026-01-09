@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Interpolation - DIP Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">📏 Interpolation (Scaling)</h1>
+        
+        <div class="alert alert-info">
+            <strong>About Interpolation:</strong> Interpolation is used to resize images. 
+            <strong>Nearest Neighbor</strong> preserves pixel values but creates blocky artifacts. 
+            <strong>Bilinear Interpolation</strong> creates smoother results by averaging neighboring pixels.
+        </div>
+
+        <!-- Image Upload -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Upload Image</h5>
+                <input type="file" id="imageInput" accept="image/*" class="form-control mb-3">
+                <button onclick="loadImage()" class="btn btn-primary">Load Image</button>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Controls</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <label for="methodSelect" class="form-label">Interpolation Method:</label>
+                        <select id="methodSelect" class="form-select" onchange="processImage()">
+                            <option value="nearest">Nearest Neighbor</option>
+                            <option value="bilinear">Bilinear</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="zoomSlider" class="form-label">Zoom Factor: <span id="zoomValue">2.0</span></label>
+                        <input type="range" class="form-range" id="zoomSlider" min="1.0" max="5.0" step="0.1" value="2.0" oninput="updateZoomValue(); processImage();">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div class="row" id="resultsSection" style="display: none;">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Original Image</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <img id="originalImage" class="img-fluid" alt="Original">
+                        <p class="mt-2 text-muted" id="originalSize"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 id="resultTitle">Processed Image</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <div id="loadingSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <img id="resultImage" class="img-fluid" alt="Result" style="display: none;">
+                        <p class="mt-2 text-muted" id="resultSize"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentImageBase64 = null;
+
+function updateZoomValue() {
+    document.getElementById('zoomValue').textContent = document.getElementById('zoomSlider').value;
+}
+
+function loadImage() {
+    const fileInput = document.getElementById('imageInput');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Please select an image file');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        currentImageBase64 = e.target.result;
+        document.getElementById('originalImage').src = currentImageBase64;
+        document.getElementById('resultsSection').style.display = 'flex';
+        processImage();
+    };
+    reader.readAsDataURL(file);
+}
+
+function processImage() {
+    if (!currentImageBase64) return;
+    
+    const method = document.getElementById('methodSelect').value;
+    const zoomFactor = parseFloat(document.getElementById('zoomSlider').value);
+    
+    document.getElementById('loadingSpinner').style.display = 'block';
+    document.getElementById('resultImage').style.display = 'none';
+    
+    fetch('/api/process/interpolation', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            image: currentImageBase64,
+            method: method,
+            zoom_factor: zoomFactor
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('loadingSpinner').style.display = 'none';
+        if (data.success) {
+            document.getElementById('resultImage').src = 'data:image/jpeg;base64,' + data.result;
+            document.getElementById('resultImage').style.display = 'block';
+            document.getElementById('resultSize').textContent = `Size: ${data.result_size}`;
+            document.getElementById('originalSize').textContent = `Size: ${data.original_size}`;
+            document.getElementById('resultTitle').textContent = 
+                (method === 'nearest' ? 'Nearest Neighbor' : 'Bilinear') + ' Result';
+        } else {
+            alert('Error: ' + (data.error || 'Processing failed'));
+        }
+    })
+    .catch(error => {
+        document.getElementById('loadingSpinner').style.display = 'none';
+        console.error('Error:', error);
+        alert('Error processing image');
+    });
+}
+</script>
+{% endblock %}

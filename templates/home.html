@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12 text-center mb-4">
+        <h1 class="display-4 text-primary">Digital Image Processing Learning Dashboard</h1>
+        <p class="lead">Interactive visualization of DIP algorithms</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h2 class="card-title">Welcome! 👋</h2>
+                <p class="card-text">
+                    This interactive dashboard helps you visualize and understand various Digital Image Processing algorithms.
+                </p>
+
+                <h3 class="mt-4">Available Topics:</h3>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">📏 Interpolation (Scaling)</h5>
+                                <p class="card-text">
+                                    Compare <strong>Nearest Neighbor</strong> vs <strong>Bilinear Interpolation</strong>.
+                                    Adjust zoom factor and see pixelation differences.
+                                </p>
+                                <a href="/interpolation" class="btn btn-primary">Try It</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">📊 Histogram Processing</h5>
+                                <p class="card-text">
+                                    <strong>Histogram Equalization</strong> to improve contrast.
+                                    <strong>Histogram Matching</strong> to match one image's histogram to another.
+                                </p>
+                                <a href="/histogram" class="btn btn-primary">Try It</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">🔍 Canny Edge Detection</h5>
+                                <p class="card-text">
+                                    Step-by-step visualization of the Canny algorithm.
+                                    See Gaussian blur, gradient computation, and thresholding stages.
+                                </p>
+                                <a href="/canny" class="btn btn-primary">Try It</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">⭐ Feature Detection</h5>
+                                <p class="card-text">
+                                    <strong>Harris Corner Detection</strong> with adjustable parameters.
+                                    <strong>SIFT Keypoints</strong> for scale-invariant features.
+                                </p>
+                                <a href="/features" class="btn btn-primary">Try It</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">🧠 CNN (Convolutional Neural Network)</h5>
+                                <p class="card-text">
+                                    Step-by-step visualization of CNN operations: <strong>Convolution</strong>, 
+                                    <strong>Activation</strong>, and <strong>Pooling</strong>. Understand how deep learning processes images!
+                                </p>
+                                <a href="/cnn" class="btn btn-primary">Try It</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">🔄 Image Transformations</h5>
+                                <p class="card-text">
+                                    Interactive intensity transformations: <strong>Negative</strong>, <strong>Log</strong>, 
+                                    <strong>Power Law</strong>, <strong>Bit Plane Slicing</strong>, <strong>Contrast Stretching</strong>, 
+                                    and <strong>Thresholding</strong>. Play with parameters in real-time!
+                                </p>
+                                <a href="/transformations" class="btn btn-primary">Try It</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-4">
+                    <h5>Getting Started:</h5>
+                    <ol>
+                        <li>Navigate to any topic using the menu above</li>
+                        <li>Upload an image using the upload button</li>
+                        <li>Adjust parameters and observe the results!</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

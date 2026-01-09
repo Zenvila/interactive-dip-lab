@@ -1,0 +1,590 @@
+{% extends "base.html" %}
+
+{% block title %}Image Transformations - DIP Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="mb-4">🔄 Image Transformations</h1>
+        
+        <div class="alert alert-info">
+            <strong>Image Transformations:</strong> Intensity transformations modify pixel values to enhance image quality, 
+            adjust contrast, or extract specific information. Play with different parameters to see their effects in real-time!
+        </div>
+
+        <!-- Image Upload -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">Upload Image</h5>
+                <input type="file" id="transformImageInput" accept="image/*" class="form-control mb-3">
+                <button onclick="loadTransformImage()" class="btn btn-primary">Load Image</button>
+            </div>
+        </div>
+
+        <!-- Transformation Tabs -->
+        <ul class="nav nav-tabs mb-4" id="transformTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="negative-tab" data-bs-toggle="tab" data-bs-target="#negative" type="button">
+                    🔲 Image Negative
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="log-tab" data-bs-toggle="tab" data-bs-target="#log" type="button">
+                    📈 Log Transformation
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="power-tab" data-bs-toggle="tab" data-bs-target="#power" type="button">
+                    ⚡ Power Law (Gamma)
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="bitplane-tab" data-bs-toggle="tab" data-bs-target="#bitplane" type="button">
+                    🧩 Bit Plane Slicing
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="contrast-tab" data-bs-toggle="tab" data-bs-target="#contrast" type="button">
+                    📊 Contrast Stretching
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="histstretch-tab" data-bs-toggle="tab" data-bs-target="#histstretch" type="button">
+                    📉 Histogram Stretching
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="threshold-tab" data-bs-toggle="tab" data-bs-target="#threshold" type="button">
+                    🎯 Thresholding
+                </button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="transformTabContent">
+            <!-- Image Negative -->
+            <div class="tab-pane fade show active" id="negative" role="tabpanel">
+                <div class="alert alert-info">
+                    <strong>Image Negative:</strong> Inverts the image intensity. Formula: s = 255 - r. 
+                    Useful for visualizing dark details or creating artistic effects.
+                </div>
+                <button onclick="processNegative()" class="btn btn-primary btn-lg mb-3">Apply Negative</button>
+                <div class="row" id="negativeResults" style="display: none;">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>Original Image</h5></div>
+                            <div class="card-body text-center">
+                                <img id="negativeOriginal" class="img-fluid" alt="Original">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>Negative Image</h5></div>
+                            <div class="card-body text-center">
+                                <div id="negativeSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <img id="negativeResult" class="img-fluid" alt="Result" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Log Transformation -->
+            <div class="tab-pane fade" id="log" role="tabpanel">
+                <div class="alert alert-info">
+                    <strong>Log Transformation:</strong> Enhances dark regions. Formula: s = c * log(1 + r). 
+                    The constant 'c' controls the scaling. Higher values brighten more.
+                </div>
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <label for="logC" class="form-label">Constant (c): <span id="logCValue">1.0</span></label>
+                        <input type="range" class="form-range" id="logC" min="0.1" max="50.0" step="0.1" value="1.0" oninput="updateLogC(); processLog();">
+                    </div>
+                </div>
+                <div class="row" id="logResults" style="display: none;">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>Original Image</h5></div>
+                            <div class="card-body text-center">
+                                <img id="logOriginal" class="img-fluid" alt="Original">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>Log Transformed</h5></div>
+                            <div class="card-body text-center">
+                                <div id="logSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <img id="logResult" class="img-fluid" alt="Result" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Power Law (Gamma) -->
+            <div class="tab-pane fade" id="power" role="tabpanel">
+                <div class="alert alert-info">
+                    <strong>Power Law (Gamma) Transformation:</strong> Formula: s = c * r^γ. 
+                    γ &lt; 1 brightens dark regions, γ &gt; 1 darkens bright regions. 
+                    Used for gamma correction in displays and image enhancement.
+                </div>
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="gamma" class="form-label">Gamma (γ): <span id="gammaValue">1.0</span></label>
+                                <input type="range" class="form-range" id="gamma" min="0.1" max="3.0" step="0.1" value="1.0" oninput="updateGamma(); processPowerLaw();">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="powerC" class="form-label">Constant (c): <span id="powerCValue">1.0</span></label>
+                                <input type="range" class="form-range" id="powerC" min="0.1" max="2.0" step="0.1" value="1.0" oninput="updatePowerC(); processPowerLaw();">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" id="powerResults" style="display: none;">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>Original Image</h5></div>
+                            <div class="card-body text-center">
+                                <img id="powerOriginal" class="img-fluid" alt="Original">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>Power Law Transformed</h5></div>
+                            <div class="card-body text-center">
+                                <div id="powerSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <img id="powerResult" class="img-fluid" alt="Result" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bit Plane Slicing -->
+            <div class="tab-pane fade" id="bitplane" role="tabpanel">
+                <div class="alert alert-info">
+                    <strong>Bit Plane Slicing:</strong> Extracts individual bit planes from the image. 
+                    Each bit plane (0-7) contains different information. MSB (bit 7) contains most visual information, 
+                    while LSB (bit 0) contains fine details and noise.
+                </div>
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <label for="bitPlane" class="form-label">Bit Plane: <span id="bitPlaneValue">7 (MSB)</span></label>
+                        <input type="range" class="form-range" id="bitPlane" min="0" max="7" step="1" value="7" oninput="updateBitPlane(); processBitPlane();">
+                        <small class="text-muted">0 = LSB (Least Significant Bit), 7 = MSB (Most Significant Bit)</small>
+                    </div>
+                </div>
+                <div class="row" id="bitplaneResults" style="display: none;">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>Original Image</h5></div>
+                            <div class="card-body text-center">
+                                <img id="bitplaneOriginal" class="img-fluid" alt="Original">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>Bit Plane <span id="bitPlaneTitle">7</span></h5></div>
+                            <div class="card-body text-center">
+                                <div id="bitplaneSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <img id="bitplaneResult" class="img-fluid" alt="Result" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contrast Stretching -->
+            <div class="tab-pane fade" id="contrast" role="tabpanel">
+                <div class="alert alert-info">
+                    <strong>Contrast Stretching:</strong> Piecewise linear transformation that enhances contrast 
+                    by stretching the intensity range. Adjust control points (r1,s1) and (r2,s2) to customize the transformation.
+                </div>
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="r1" class="form-label">r1: <span id="r1Value">0</span></label>
+                                <input type="range" class="form-range" id="r1" min="0" max="255" value="0" oninput="updateR1(); processContrast();">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="s1" class="form-label">s1: <span id="s1Value">0</span></label>
+                                <input type="range" class="form-range" id="s1" min="0" max="255" value="0" oninput="updateS1(); processContrast();">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="r2" class="form-label">r2: <span id="r2Value">255</span></label>
+                                <input type="range" class="form-range" id="r2" min="0" max="255" value="255" oninput="updateR2(); processContrast();">
+                            </div>
+                            <div class="col-md-3">
+                                <label for="s2" class="form-label">s2: <span id="s2Value">255</span></label>
+                                <input type="range" class="form-range" id="s2" min="0" max="255" value="255" oninput="updateS2(); processContrast();">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" id="contrastResults" style="display: none;">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>Original Image</h5></div>
+                            <div class="card-body text-center">
+                                <img id="contrastOriginal" class="img-fluid" alt="Original">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>Contrast Stretched</h5></div>
+                            <div class="card-body text-center">
+                                <div id="contrastSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <img id="contrastResult" class="img-fluid" alt="Result" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Histogram Stretching -->
+            <div class="tab-pane fade" id="histstretch" role="tabpanel">
+                <div class="alert alert-info">
+                    <strong>Histogram Stretching:</strong> Automatically stretches the histogram to use the full intensity range (0-255). 
+                    Finds min and max pixel values and maps them to 0 and 255 respectively. Great for automatic contrast enhancement!
+                </div>
+                <button onclick="processHistStretch()" class="btn btn-primary btn-lg mb-3">Apply Histogram Stretching</button>
+                <div class="row" id="histstretchResults" style="display: none;">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>Original Image</h5></div>
+                            <div class="card-body text-center">
+                                <img id="histstretchOriginal" class="img-fluid" alt="Original">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>Histogram Stretched</h5></div>
+                            <div class="card-body text-center">
+                                <div id="histstretchSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <img id="histstretchResult" class="img-fluid" alt="Result" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Thresholding -->
+            <div class="tab-pane fade" id="threshold" role="tabpanel">
+                <div class="alert alert-info">
+                    <strong>Thresholding:</strong> Converts grayscale image to binary by setting pixels above threshold to white 
+                    and below to black. Different threshold types produce different effects.
+                </div>
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="thresholdValue" class="form-label">Threshold: <span id="thresholdValueDisplay">127</span></label>
+                                <input type="range" class="form-range" id="thresholdValue" min="0" max="255" value="127" oninput="updateThresholdValue(); processThreshold();">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="thresholdType" class="form-label">Threshold Type:</label>
+                                <select id="thresholdType" class="form-select" onchange="processThreshold()">
+                                    <option value="binary">Binary</option>
+                                    <option value="binary_inv">Binary Inverted</option>
+                                    <option value="trunc">Truncate</option>
+                                    <option value="tozero">To Zero</option>
+                                    <option value="tozero_inv">To Zero Inverted</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row" id="thresholdResults" style="display: none;">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>Original Image</h5></div>
+                            <div class="card-body text-center">
+                                <img id="thresholdOriginal" class="img-fluid" alt="Original">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header"><h5>Thresholded Image</h5></div>
+                            <div class="card-body text-center">
+                                <div id="thresholdSpinner" class="spinner-border text-primary" role="status" style="display: none;">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <img id="thresholdResult" class="img-fluid" alt="Result" style="display: none;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let transformImageBase64 = null;
+
+function loadTransformImage() {
+    const fileInput = document.getElementById('transformImageInput');
+    const file = fileInput.files[0];
+    
+    if (!file) {
+        alert('Please select an image file');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        transformImageBase64 = e.target.result;
+        // Update all original image displays
+        document.getElementById('negativeOriginal').src = transformImageBase64;
+        document.getElementById('logOriginal').src = transformImageBase64;
+        document.getElementById('powerOriginal').src = transformImageBase64;
+        document.getElementById('bitplaneOriginal').src = transformImageBase64;
+        document.getElementById('contrastOriginal').src = transformImageBase64;
+        document.getElementById('histstretchOriginal').src = transformImageBase64;
+        document.getElementById('thresholdOriginal').src = transformImageBase64;
+    };
+    reader.readAsDataURL(file);
+}
+
+// Image Negative
+function processNegative() {
+    if (!transformImageBase64) {
+        alert('Please upload an image first');
+        return;
+    }
+    document.getElementById('negativeSpinner').style.display = 'block';
+    document.getElementById('negativeResults').style.display = 'flex';
+    
+    fetch('/api/process/transformations/negative', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({image: transformImageBase64})
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('negativeSpinner').style.display = 'none';
+        if (data.success) {
+            document.getElementById('negativeResult').src = 'data:image/jpeg;base64,' + data.result;
+            document.getElementById('negativeResult').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        document.getElementById('negativeSpinner').style.display = 'none';
+        console.error('Error:', error);
+    });
+}
+
+// Log Transformation
+function updateLogC() {
+    document.getElementById('logCValue').textContent = document.getElementById('logC').value;
+}
+
+function processLog() {
+    if (!transformImageBase64) return;
+    document.getElementById('logSpinner').style.display = 'block';
+    document.getElementById('logResults').style.display = 'flex';
+    
+    const c = parseFloat(document.getElementById('logC').value);
+    fetch('/api/process/transformations/log', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({image: transformImageBase64, c: c})
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('logSpinner').style.display = 'none';
+        if (data.success) {
+            document.getElementById('logResult').src = 'data:image/jpeg;base64,' + data.result;
+            document.getElementById('logResult').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        document.getElementById('logSpinner').style.display = 'none';
+        console.error('Error:', error);
+    });
+}
+
+// Power Law
+function updateGamma() {
+    document.getElementById('gammaValue').textContent = document.getElementById('gamma').value;
+}
+
+function updatePowerC() {
+    document.getElementById('powerCValue').textContent = document.getElementById('powerC').value;
+}
+
+function processPowerLaw() {
+    if (!transformImageBase64) return;
+    document.getElementById('powerSpinner').style.display = 'block';
+    document.getElementById('powerResults').style.display = 'flex';
+    
+    const gamma = parseFloat(document.getElementById('gamma').value);
+    const c = parseFloat(document.getElementById('powerC').value);
+    fetch('/api/process/transformations/power_law', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({image: transformImageBase64, gamma: gamma, c: c})
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('powerSpinner').style.display = 'none';
+        if (data.success) {
+            document.getElementById('powerResult').src = 'data:image/jpeg;base64,' + data.result;
+            document.getElementById('powerResult').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        document.getElementById('powerSpinner').style.display = 'none';
+        console.error('Error:', error);
+    });
+}
+
+// Bit Plane
+function updateBitPlane() {
+    const bp = parseInt(document.getElementById('bitPlane').value);
+    document.getElementById('bitPlaneValue').textContent = bp + (bp === 7 ? ' (MSB)' : bp === 0 ? ' (LSB)' : '');
+    document.getElementById('bitPlaneTitle').textContent = bp;
+}
+
+function processBitPlane() {
+    if (!transformImageBase64) return;
+    document.getElementById('bitplaneSpinner').style.display = 'block';
+    document.getElementById('bitplaneResults').style.display = 'flex';
+    
+    const bitPlane = parseInt(document.getElementById('bitPlane').value);
+    fetch('/api/process/transformations/bit_plane', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({image: transformImageBase64, bit_plane: bitPlane})
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('bitplaneSpinner').style.display = 'none';
+        if (data.success) {
+            document.getElementById('bitplaneResult').src = 'data:image/jpeg;base64,' + data.result;
+            document.getElementById('bitplaneResult').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        document.getElementById('bitplaneSpinner').style.display = 'none';
+        console.error('Error:', error);
+    });
+}
+
+// Contrast Stretching
+function updateR1() { document.getElementById('r1Value').textContent = document.getElementById('r1').value; }
+function updateS1() { document.getElementById('s1Value').textContent = document.getElementById('s1').value; }
+function updateR2() { document.getElementById('r2Value').textContent = document.getElementById('r2').value; }
+function updateS2() { document.getElementById('s2Value').textContent = document.getElementById('s2').value; }
+
+function processContrast() {
+    if (!transformImageBase64) return;
+    document.getElementById('contrastSpinner').style.display = 'block';
+    document.getElementById('contrastResults').style.display = 'flex';
+    
+    const r1 = parseInt(document.getElementById('r1').value);
+    const s1 = parseInt(document.getElementById('s1').value);
+    const r2 = parseInt(document.getElementById('r2').value);
+    const s2 = parseInt(document.getElementById('s2').value);
+    
+    fetch('/api/process/transformations/contrast_stretch', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({image: transformImageBase64, r1: r1, s1: s1, r2: r2, s2: s2})
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('contrastSpinner').style.display = 'none';
+        if (data.success) {
+            document.getElementById('contrastResult').src = 'data:image/jpeg;base64,' + data.result;
+            document.getElementById('contrastResult').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        document.getElementById('contrastSpinner').style.display = 'none';
+        console.error('Error:', error);
+    });
+}
+
+// Histogram Stretching
+function processHistStretch() {
+    if (!transformImageBase64) {
+        alert('Please upload an image first');
+        return;
+    }
+    document.getElementById('histstretchSpinner').style.display = 'block';
+    document.getElementById('histstretchResults').style.display = 'flex';
+    
+    fetch('/api/process/transformations/histogram_stretch', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({image: transformImageBase64})
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('histstretchSpinner').style.display = 'none';
+        if (data.success) {
+            document.getElementById('histstretchResult').src = 'data:image/jpeg;base64,' + data.result;
+            document.getElementById('histstretchResult').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        document.getElementById('histstretchSpinner').style.display = 'none';
+        console.error('Error:', error);
+    });
+}
+
+// Thresholding
+function updateThresholdValue() {
+    document.getElementById('thresholdValueDisplay').textContent = document.getElementById('thresholdValue').value;
+}
+
+function processThreshold() {
+    if (!transformImageBase64) return;
+    document.getElementById('thresholdSpinner').style.display = 'block';
+    document.getElementById('thresholdResults').style.display = 'flex';
+    
+    const threshold = parseInt(document.getElementById('thresholdValue').value);
+    const thresholdType = document.getElementById('thresholdType').value;
+    
+    fetch('/api/process/transformations/threshold', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({image: transformImageBase64, threshold: threshold, threshold_type: thresholdType})
+    })
+    .then(response => response.json())
+    .then(data => {
+        document.getElementById('thresholdSpinner').style.display = 'none';
+        if (data.success) {
+            document.getElementById('thresholdResult').src = 'data:image/jpeg;base64,' + data.result;
+            document.getElementById('thresholdResult').style.display = 'block';
+        }
+    })
+    .catch(error => {
+        document.getElementById('thresholdSpinner').style.display = 'none';
+        console.error('Error:', error);
+    });
+}
+</script>
+{% endblock %}
